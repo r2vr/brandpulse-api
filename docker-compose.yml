@@ -1,0 +1,37 @@
+# Local stack: the API plus the observability backbone it will report into.
+# Postgres/Prometheus/Grafana are wired now so adding persistence and metrics
+# later is a code change, not an infra change.
+services:
+  app:
+    build: .
+    ports: ["8000:8000"]
+    environment:
+      BRANDPULSE_ENVIRONMENT: development
+      BRANDPULSE_DATABASE_URL: postgresql+asyncpg://brandpulse:brandpulse@db:5432/brandpulse
+    depends_on: [db]
+    # Default CMD serves the API on :8000 (see Dockerfile). Open /docs.
+
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: brandpulse
+      POSTGRES_PASSWORD: brandpulse
+      POSTGRES_DB: brandpulse
+    ports: ["5432:5432"]
+    volumes: [pgdata:/var/lib/postgresql/data]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U brandpulse"]
+      interval: 5s
+      retries: 5
+
+  prometheus:
+    image: prom/prometheus:latest
+    ports: ["9090:9090"]
+
+  grafana:
+    image: grafana/grafana:latest
+    ports: ["3000:3000"]
+    depends_on: [prometheus]
+
+volumes:
+  pgdata:

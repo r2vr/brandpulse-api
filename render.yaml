@@ -1,0 +1,26 @@
+# Free-tier deploy spec for Render (https://render.com).
+# Push to GitHub, then "New > Blueprint" and point it at this repo.
+databases:
+  - name: brandpulse-db
+    plan: free
+    databaseName: brandpulse
+    user: brandpulse
+
+services:
+  - type: web
+    name: brandpulse-api
+    runtime: docker
+    plan: free
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /health
+    envVars:
+      - key: BRANDPULSE_ENVIRONMENT
+        value: production
+      - key: PORT
+        value: "8000"
+      # Internal connection string from the managed Postgres above. The app
+      # rewrites it onto the asyncpg driver at startup (see config.py).
+      - key: BRANDPULSE_DATABASE_URL
+        fromDatabase:
+          name: brandpulse-db
+          property: connectionString
