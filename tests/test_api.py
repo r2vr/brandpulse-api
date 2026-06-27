@@ -16,6 +16,13 @@ def client() -> httpx.AsyncClient:
     return httpx.AsyncClient(transport=transport, base_url="http://test")
 
 
+async def test_root_serves_landing_page(client: httpx.AsyncClient) -> None:
+    resp = await client.get("/")
+    assert resp.status_code == 200
+    assert resp.headers["content-type"].startswith("text/html")
+    assert "BrandPulse" in resp.text
+
+
 async def test_health(client: httpx.AsyncClient) -> None:
     resp = await client.get("/health")
     assert resp.status_code == 200

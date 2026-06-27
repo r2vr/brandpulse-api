@@ -10,9 +10,11 @@ from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from typing import Annotated
 
-from fastapi import FastAPI, Query
+from fastapi import FastAPI, Query, Request
+from fastapi.responses import HTMLResponse
 
 from brandpulse import service, sources
+from brandpulse.api.landing import render_landing
 from brandpulse.api.routers_campaigns import router as campaigns_router
 from brandpulse.api.schemas import (
     CuratedItem,
@@ -41,6 +43,10 @@ def create_app() -> FastAPI:
         summary="Brand monitoring & content curation engine.",
         lifespan=lifespan,
     )
+
+    @app.get("/", response_class=HTMLResponse, include_in_schema=False)
+    async def index(request: Request) -> HTMLResponse:
+        return HTMLResponse(render_landing(str(request.base_url)))
 
     @app.get("/health", response_model=HealthResponse, tags=["meta"])
     async def health() -> HealthResponse:
